@@ -32,6 +32,7 @@
             NSLog(@"😫😫😫 Error getting home timeline: %@", error.localizedDescription);
         }
     }];
+    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -51,6 +52,9 @@
     [[APIManager shared] logout];  
 }
 
+- (void)loadTweets {
+    self.arrayOfTweets = tweets;
+}
 /*
 #pragma mark - Navigation
 
