@@ -10,8 +10,16 @@
 #import "APIManager.h"
 #import "AppDelegate.h"
 #import "LoginViewController.h"
+#import "TweetCell.h"
+#import "Tweet.h"
+#import "UIImageView+AFNetworking.h"
 
-@interface TimelineViewController ()
+@interface TimelineViewController () <UITableViewDelegate, UITableViewDataSource>
+
+@property (strong, nonatomic) NSMutableArray* arrayOfTweets;
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property(nonatomic, strong) UIRefreshControl *refreshControl;
+
 
 @end
 
@@ -20,20 +28,30 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    // Get timeline
-    [[APIManager shared] getHomeTimelineWithCompletion:^(NSArray *tweets, NSError *error) {
-        if (tweets) {
-            NSLog(@"😎😎😎 Successfully loaded home timeline");
-            for (NSDictionary *dictionary in tweets) {
-                NSString *text = dictionary[@"text"];
-                NSLog(@"%@", text);
-            }
-        } else {
-            NSLog(@"😫😫😫 Error getting home timeline: %@", error.localizedDescription);
-        }
-    }];
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+    self.tableView.rowHeight = 200;
+
+    self.refreshControl = [[UIRefreshControl alloc] init];
+    [self.refreshControl addTarget:self action:@selector(loadTweets) forControlEvents:UIControlEventValueChanged];
+    [self.tableView insertSubview:self.refreshControl atIndex:0];
+
+    [self loadTweets];
+
     
 }
+
+
+ - (void)loadTweets {
+     [[APIManager shared] getHomeTimelineWithCompletion:^(NSArray *tweets, NSError *error) {
+         if (tweets) {
+             self.arrayOfTweets = tweets;
+         } else {
+             NSLog(@"😫😫😫 Error getting home timeline: %@", error.localizedDescription);
+         }
+     }];
+     [self.refreshControl endRefreshing];
+ }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
@@ -52,9 +70,33 @@
     [[APIManager shared] logout];  
 }
 
-- (void)loadTweets {
-    self.arrayOfTweets = tweets;
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    return 20;
 }
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    
+    TweetCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TweetCell" forIndexPath:indexPath];
+    
+    Tweet *tweet = self.arrayOfTweets[indexPath.row];
+    
+//    NSLog(@"%@", tweet.user.screenName);
+    
+//    cell.name.text = tweet.user.name;
+    cell.name.text = tweet.user.name;
+    
+    cell.userTweet.text = tweet.text;
+//    cell.userTweet.text = tweet.text;
+    
+    NSString *URLString = tweet.user.profilePicture;
+    NSURL *url = [NSURL URLWithString:URLString];
+    NSData *urlData = [NSData dataWithContentsOfURL:url];
+    
+    [cell.userProfileImage setImageWithURL:url];
+    
+    return cell;
+}
+
 /*
 #pragma mark - Navigation
 
