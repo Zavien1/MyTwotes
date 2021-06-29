@@ -13,8 +13,9 @@
 #import "TweetCell.h"
 #import "Tweet.h"
 #import "UIImageView+AFNetworking.h"
+#import "ComposeViewController.h"
 
-@interface TimelineViewController () <UITableViewDelegate, UITableViewDataSource>
+@interface TimelineViewController () <ComposeViewControllerDelegate, UITableViewDelegate, UITableViewDataSource>
 
 @property (strong, nonatomic) NSMutableArray* arrayOfTweets;
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
@@ -41,17 +42,22 @@
     
 }
 
-
  - (void)loadTweets {
      [[APIManager shared] getHomeTimelineWithCompletion:^(NSArray *tweets, NSError *error) {
          if (tweets) {
              self.arrayOfTweets = tweets;
+             [self.tableView reloadData];
          } else {
              NSLog(@"😫😫😫 Error getting home timeline: %@", error.localizedDescription);
          }
      }];
      [self.refreshControl endRefreshing];
  }
+
+
+- (IBAction)didTapLogout:(id)sender {
+    [self userLogout];
+}
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
@@ -84,8 +90,10 @@
     
 //    cell.name.text = tweet.user.name;
     cell.name.text = tweet.user.name;
-    
+    cell.tweet = tweet;
     cell.userTweet.text = tweet.text;
+    cell.likeCount.text = [NSString stringWithFormat:@"%i", tweet.favoriteCount];
+    cell.retweetCount.text = [NSString stringWithFormat:@"%i", tweet.retweetCount];
 //    cell.userTweet.text = tweet.text;
     
     NSString *URLString = tweet.user.profilePicture;
@@ -97,15 +105,11 @@
     return cell;
 }
 
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
+   UINavigationController *navigationController = [segue destinationViewController];
+   ComposeViewController *composeController = (ComposeViewController*)navigationController.topViewController;
+   composeController.delegate = self;
 }
-*/
 
 
 @end
