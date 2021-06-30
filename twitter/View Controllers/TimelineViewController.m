@@ -14,6 +14,7 @@
 #import "Tweet.h"
 #import "UIImageView+AFNetworking.h"
 #import "ComposeViewController.h"
+#import "DateTools.h"
 
 @interface TimelineViewController () <ComposeViewControllerDelegate, UITableViewDelegate, UITableViewDataSource>
 
@@ -31,7 +32,6 @@
     
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
-    self.tableView.rowHeight = 200;
 
     self.refreshControl = [[UIRefreshControl alloc] init];
     [self.refreshControl addTarget:self action:@selector(loadTweets) forControlEvents:UIControlEventValueChanged];
@@ -85,15 +85,15 @@
     TweetCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TweetCell" forIndexPath:indexPath];
     
     Tweet *tweet = self.arrayOfTweets[indexPath.row];
-    
-//    NSLog(@"%@", tweet.user.screenName);
-    
-//    cell.name.text = tweet.user.name;
+        
     cell.name.text = tweet.user.name;
+    cell.userName.text = tweet.user.screenName;
     cell.tweet = tweet;
     cell.userTweet.text = tweet.text;
     cell.likeCount.text = [NSString stringWithFormat:@"%i", tweet.favoriteCount];
     cell.retweetCount.text = [NSString stringWithFormat:@"%i", tweet.retweetCount];
+    cell.tweetDate.text = tweet.createdAtString;
+//    NSLog(@"%@", tweet.createdAtString);
 //    cell.userTweet.text = tweet.text;
     
     NSString *URLString = tweet.user.profilePicture;
