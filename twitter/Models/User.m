@@ -15,7 +15,9 @@
     if (self) {
         self.name = dictionary[@"name"];
         self.screenName = dictionary[@"screen_name"];
-        self.profilePicture = dictionary[@"profile_image_url_https"];
+        NSString *profileURL = dictionary[@"profile_image_url_https"];
+        
+        self.profilePicture = [profileURL stringByReplacingOccurrencesOfString:@"_normal" withString:@""];
     // Initialize any other properties
     }
     return self;

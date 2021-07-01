@@ -15,6 +15,7 @@
 #import "UIImageView+AFNetworking.h"
 #import "ComposeViewController.h"
 #import "DateTools.h"
+#import "DetailsViewController.h"
 
 @interface TimelineViewController () <ComposeViewControllerDelegate, UITableViewDelegate, UITableViewDataSource>
 
@@ -32,7 +33,9 @@
     
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
-
+    self.tableView.rowHeight = UITableViewAutomaticDimension;
+    
+    
     self.refreshControl = [[UIRefreshControl alloc] init];
     [self.refreshControl addTarget:self action:@selector(loadTweets) forControlEvents:UIControlEventValueChanged];
     [self.tableView insertSubview:self.refreshControl atIndex:0];
@@ -40,6 +43,11 @@
     [self loadTweets];
 
     
+}
+
+- (void)didTweet:(Tweet *)tweet {
+    [self.arrayOfTweets insertObject:tweet atIndex:0];
+    [self.tableView reloadData];
 }
 
  - (void)loadTweets {
@@ -77,7 +85,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return 20;
+    return 100;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -90,8 +98,6 @@
     cell.userName.text = tweet.user.screenName;
     cell.tweet = tweet;
     cell.userTweet.text = tweet.text;
-    cell.likeCount.text = [NSString stringWithFormat:@"%i", tweet.favoriteCount];
-    cell.retweetCount.text = [NSString stringWithFormat:@"%i", tweet.retweetCount];
     cell.tweetDate.text = tweet.createdAtString;
 //    NSLog(@"%@", tweet.createdAtString);
 //    cell.userTweet.text = tweet.text;
@@ -99,6 +105,15 @@
     NSString *URLString = tweet.user.profilePicture;
     NSURL *url = [NSURL URLWithString:URLString];
     NSData *urlData = [NSData dataWithContentsOfURL:url];
+    cell.userProfileImage.layer.borderWidth = 1;
+    cell.userProfileImage.layer.masksToBounds = false;
+    cell.userProfileImage.layer.borderColor = (__bridge CGColorRef _Nullable)([UIColor colorWithRed:255/255.0 green:255/255.0 blue:255/255.0 alpha:1.0]);
+    cell.userProfileImage.layer.cornerRadius = 24;
+    cell.userProfileImage.clipsToBounds = true;
+    NSString *likeCount = [NSString stringWithFormat:@"%i", tweet.favoriteCount];
+    NSString *retweetCount = [NSString stringWithFormat:@"%i", tweet.retweetCount];
+    [cell.likeButton setTitle:likeCount forState:UIControlStateNormal];
+    [cell.retweetButton setTitle:retweetCount forState:UIControlStateNormal];
     
     [cell.userProfileImage setImageWithURL:url];
     
@@ -106,9 +121,20 @@
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-   UINavigationController *navigationController = [segue destinationViewController];
-   ComposeViewController *composeController = (ComposeViewController*)navigationController.topViewController;
-   composeController.delegate = self;
+    
+    if([segue.identifier isEqual:@"ComposeView"]){
+        UINavigationController *navigationController = [segue destinationViewController];
+        ComposeViewController *composeController = (ComposeViewController*)navigationController.topViewController;
+        composeController.delegate = self;
+    }
+    else if([segue.identifier isEqual:@"DetailsView"]) {
+        UITableViewCell *tappedTweet = sender;
+        NSIndexPath *indexPath = [self.tableView indexPathForCell:tappedTweet];
+        Tweet *tweet = self.arrayOfTweets[indexPath.row];
+         
+        DetailsViewController *detailsViewController = [segue destinationViewController];
+        detailsViewController.tweet = tweet;
+    }
 }
 
 
