@@ -66,6 +66,18 @@ static NSString * const baseURLString = @"https://api.twitter.com";
     }];
 }
 
+- (void)getUserInformation:(void(^)(NSDictionary *userInfo, NSError *error))completion {
+    [self GET:@"1.1/account/verify_credentials.json"
+       parameters:nil progress:nil success:^(NSURLSessionDataTask * _Nonnull task, NSDictionary *  _Nullable userDictionaries) {
+           // Success
+           NSDictionary *user  = [[NSDictionary alloc]initWithDictionary:userDictionaries];
+           completion(user, nil);
+       } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+           // There was a problem
+           completion(nil, error);
+    }];
+}
+
 - (void)postStatusWithText:(NSString *)text completion:(void (^)(Tweet *, NSError *))completion{
     NSString *urlString = @"1.1/statuses/update.json";
     NSDictionary *parameters = @{@"status": text};

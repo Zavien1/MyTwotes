@@ -11,17 +11,19 @@
 #import "AppDelegate.h"
 #import "LoginViewController.h"
 #import "TweetCell.h"
-#import "Tweet.h"
-#import "UIImageView+AFNetworking.h"
 #import "ComposeViewController.h"
 #import "DateTools.h"
 #import "DetailsViewController.h"
+#import "ProfileViewController.h"
+#import "TTTAttributedLabel.h"
 
 @interface TimelineViewController () <ComposeViewControllerDelegate, UITableViewDelegate, UITableViewDataSource>
 
 @property (strong, nonatomic) NSMutableArray* arrayOfTweets;
-@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong,nonatomic) NSArray* arrayOfUserInfo;
 @property(nonatomic, strong) UIRefreshControl *refreshControl;
+@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingIndicator;
+
 
 
 @end
@@ -30,6 +32,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [self.loadingIndicator startAnimating];
     
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
@@ -41,6 +44,7 @@
     [self.tableView insertSubview:self.refreshControl atIndex:0];
 
     [self loadTweets];
+//    [self loadUserInfo];
 
     
 }
@@ -50,18 +54,20 @@
     [self.tableView reloadData];
 }
 
+//API Calls
  - (void)loadTweets {
      [[APIManager shared] getHomeTimelineWithCompletion:^(NSArray *tweets, NSError *error) {
          if (tweets) {
              self.arrayOfTweets = tweets;
              [self.tableView reloadData];
+             
          } else {
              NSLog(@"😫😫😫 Error getting home timeline: %@", error.localizedDescription);
          }
      }];
      [self.refreshControl endRefreshing];
+     [self.loadingIndicator stopAnimating];
  }
-
 
 - (IBAction)didTapLogout:(id)sender {
     [self userLogout];
@@ -81,45 +87,34 @@
     LoginViewController *loginViewController = [storyboard instantiateViewControllerWithIdentifier:@"LoginViewController"];
     appDelegate.window.rootViewController = loginViewController;
     
-    [[APIManager shared] logout];  
+    [[APIManager shared] logout];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return 100;
+    return self.arrayOfTweets.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    
     TweetCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TweetCell" forIndexPath:indexPath];
-    
     Tweet *tweet = self.arrayOfTweets[indexPath.row];
-        
-    cell.name.text = tweet.user.name;
-    cell.userName.text = tweet.user.screenName;
-    cell.tweet = tweet;
-    cell.userTweet.text = tweet.text;
-    cell.tweetDate.text = tweet.createdAtString;
-//    NSLog(@"%@", tweet.createdAtString);
-//    cell.userTweet.text = tweet.text;
-    
-    NSString *URLString = tweet.user.profilePicture;
-    NSURL *url = [NSURL URLWithString:URLString];
-    NSData *urlData = [NSData dataWithContentsOfURL:url];
-    cell.userProfileImage.layer.borderWidth = 1;
-    cell.userProfileImage.layer.masksToBounds = false;
-    cell.userProfileImage.layer.borderColor = (__bridge CGColorRef _Nullable)([UIColor colorWithRed:255/255.0 green:255/255.0 blue:255/255.0 alpha:1.0]);
-    cell.userProfileImage.layer.cornerRadius = 24;
-    cell.userProfileImage.clipsToBounds = true;
-    NSString *likeCount = [NSString stringWithFormat:@"%i", tweet.favoriteCount];
-    NSString *retweetCount = [NSString stringWithFormat:@"%i", tweet.retweetCount];
-    [cell.likeButton setTitle:likeCount forState:UIControlStateNormal];
-    [cell.retweetButton setTitle:retweetCount forState:UIControlStateNormal];
-    
-    [cell.userProfileImage setImageWithURL:url];
-    
+    [cell generateCell:tweet];
     return cell;
 }
 
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath{
+    if(indexPath.row + 1 == [self.arrayOfTweets count]){
+        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+        if ([self.arrayOfTweets count] <= 180) {
+            [userDefaults setInteger: [self.arrayOfTweets count] + 20 forKey:@"numTweets"];
+            [userDefaults synchronize];
+        }
+        
+        // Reload data
+        [self loadTweets];
+    }
+}
+
+//Segue to DetailsView or ComposeView
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
     
     if([segue.identifier isEqual:@"ComposeView"]){
@@ -134,6 +129,14 @@
          
         DetailsViewController *detailsViewController = [segue destinationViewController];
         detailsViewController.tweet = tweet;
+    }
+    else if([segue.identifier isEqual:@"ProfileView"]) {
+        UITableViewCell *tappedTweet = sender;
+        NSIndexPath *indexPath = [self.tableView indexPathForCell:tappedTweet];
+        
+        Tweet *user = self.arrayOfUserInfo[indexPath.row];
+        ProfileViewController *profileViewController = [segue destinationViewController];
+        profileViewController.user = user;
     }
 }
 

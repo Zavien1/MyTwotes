@@ -15,7 +15,11 @@
     if (self) {
         self.name = dictionary[@"name"];
         self.screenName = dictionary[@"screen_name"];
+        self.profileBio = dictionary[@"description"];
+        self.followerCount = [dictionary[@"followers_count"] intValue];
+        self.followingCount = [dictionary[@"friends_count"] intValue];
         NSString *profileURL = dictionary[@"profile_image_url_https"];
+        self.profileBanner = dictionary[@"profile_background_image_url_https"];
         
         self.profilePicture = [profileURL stringByReplacingOccurrencesOfString:@"_normal" withString:@""];
     // Initialize any other properties
