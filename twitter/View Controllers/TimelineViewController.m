@@ -21,7 +21,7 @@
 
 @property (strong, nonatomic) NSMutableArray* arrayOfTweets;
 @property (strong,nonatomic) NSArray* arrayOfUserInfo;
-@property(nonatomic, strong) UIRefreshControl *refreshControl;
+@property (nonatomic, strong) UIRefreshControl *refreshControl;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingIndicator;
 
 
@@ -44,9 +44,6 @@
     [self.tableView insertSubview:self.refreshControl atIndex:0];
 
     [self loadTweets];
-//    [self loadUserInfo];
-
-    
 }
 
 - (void)didTweet:(Tweet *)tweet {
@@ -55,13 +52,13 @@
 }
 
 //API Calls
- - (void)loadTweets {
+- (void)loadTweets {
      [[APIManager shared] getHomeTimelineWithCompletion:^(NSArray *tweets, NSError *error) {
-         if (tweets) {
+         if(tweets){
              self.arrayOfTweets = tweets;
              [self.tableView reloadData];
              
-         } else {
+         }else{
              NSLog(@"😫😫😫 Error getting home timeline: %@", error.localizedDescription);
          }
      }];
@@ -105,7 +102,7 @@
     if(indexPath.row + 1 == [self.arrayOfTweets count]){
         NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
         if ([self.arrayOfTweets count] <= 180) {
-            [userDefaults setInteger: [self.arrayOfTweets count] + 20 forKey:@"numTweets"];
+            [userDefaults setInteger:[self.arrayOfTweets count] + 20 forKey:@"numTweets"];
             [userDefaults synchronize];
         }
         
